@@ -8,7 +8,7 @@ const redis = require("redis");
 
 const app = express();
 const port = 82;
-const client = redis.createClient();
+const client = redis.createClient(); // é necessário instalar o Redis (https://redis.io/download) ou windows (https://github.com/dmajkic/redis/downloads)
 
 // Rotas
 
@@ -16,7 +16,7 @@ app.get('/', (response) => {
   response.send('ok');
 })
 
-app.get(['/teste-1', '/test-1'], async (request, response) => {
+app.get(['/teste-1', '/test-1'], async (request, response) => { // Teste 1, sempre virá sem o Redis.
   let iDate = new Date().getTime();
 
   await getFromJSONPlaceholder('https://jsonplaceholder.typicode.com/comments').catch((er) => null)
@@ -24,7 +24,7 @@ app.get(['/teste-1', '/test-1'], async (request, response) => {
   return response.send({ res: `demorou ${((new Date().getTime() - iDate))} milissegundos`})
 })
 
-app.get(['/teste-2', '/test-2'], async (request, response) => {
+app.get(['/teste-2', '/test-2'], async (request, response) => { // Teste 2, sempre virá com o Redis (quando possível).
   let iDate = new Date().getTime();
 
   await getFromJSONPlaceholder('https://jsonplaceholder.typicode.com/comments', true).catch((er) => null)
