@@ -2,11 +2,13 @@
 
 const express = require('express');
 const request = require('request');
+const redis = require("redis");
 
 // Configurações
 
 const app = express();
 const port = 82;
+const client = redis.createClient();
 
 // Rotas
 
@@ -22,14 +24,29 @@ app.get(['/teste-1', '/test-1'], async (request, response) => {
   return response.send({ res: `demorou ${((new Date().getTime() - iDate))} milissegundos`})
 })
 
+app.get(['/teste-2', '/test-2'], async (request, response) => {
+  let iDate = new Date().getTime();
+
+  await getFromJSONPlaceholder('https://jsonplaceholder.typicode.com/comments', true).catch((er) => null)
+
+  return response.send({ res: `demorou ${((new Date().getTime() - iDate))} milissegundos`})
+})
+
 app.listen(port, () => {
   console.log('Veja a porta:', port);
 })
 
 // Funções
 
-async function getFromJSONPlaceholder (url) {
-  return new Promise((resolve, reject) => {
+async function getFromJSONPlaceholder (url, redis = false) {
+  return new Promise(async (resolve, reject) => {
+
+    if (redis) {
+      let fromReds = await getFromRedis(url).catch((er) => null)
+      if (fromReds) {
+        return resolve(JSON.parse(fromReds))
+      }
+    }
 
     const options = {
       url: url,
@@ -44,7 +61,23 @@ async function getFromJSONPlaceholder (url) {
         return reject(null);
       }
 
+      if (redis) {
+        client.set(url, JSON.stringify(body))
+      }
+
       return resolve(body);
+    });
+  })
+}
+
+async function getFromRedis(key) {
+  return new Promise((resolve, reject) => {
+    client.get(key, (err, rply) => {
+      if (err) {
+        return reject(null) 
+      }
+
+      return resolve(rply)
     });
   })
 }
